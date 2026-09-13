@@ -1,0 +1,21 @@
+packages:
+  - apps/*
+  - packages/*
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - unrs-resolver
+  - workerd
+allowBuilds:
+  '@prisma/client': true
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true
+  workerd: true
+overrides:
+  postcss: 8.5.28
+  multer: 2.3.0
+  deepmerge-ts: 8.0.2

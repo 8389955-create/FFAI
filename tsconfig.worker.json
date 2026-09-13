@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "WebWorker"],
+    "types": []
+  },
+  "files": ["worker-configuration.d.ts", "src/cloudflare.ts"]
+}

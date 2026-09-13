@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+.next
+**/.next
+out
+**/out
+dist
+**/dist
+.turbo
+**/.turbo
+.git
+.env
+.env.*
+!.env.example
+.qa-commercial
+*.log
+*.cpuprofile

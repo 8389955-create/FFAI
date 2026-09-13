@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+dist
+.turbo
+.wrangler
+.env
+.env.local
+coverage
+.qa-commercial/
+*.log
+*.cpuprofile
+*.tsbuildinfo
+.DS_Store

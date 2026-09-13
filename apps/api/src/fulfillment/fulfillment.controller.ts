@@ -1,0 +1,19 @@
+import{Body,Controller,Get,Param,Patch,Post,Query}from'@nestjs/common';import{CurrentUser}from'../auth/decorators/current-user.decorator';import{RequirePermissions}from'../auth/decorators/permissions.decorator';import type{AuthUser}from'../auth/auth.types';import{AddAfterSalesCommentDto,CompleteInstallationDto,CreateAfterSalesDto,CreateInstallationDto,CreateShipmentDto,DeliverShipmentDto,FulfillmentListQueryDto,ScheduleInstallationDto,UpdateAfterSalesDto}from'./dto/fulfillment.dto';import{FulfillmentService}from'./fulfillment.service';
+@Controller('fulfillment')export class FulfillmentController{constructor(private readonly service:FulfillmentService){}
+@RequirePermissions('fulfillment.shipment.read')@Get('available-orders')available(@CurrentUser()u:AuthUser){return this.service.availableOrders(u)}
+@RequirePermissions('fulfillment.shipment.read')@Get('personnel')personnel(@CurrentUser()u:AuthUser){return this.service.personnel(u)}
+@RequirePermissions('fulfillment.shipment.read')@Get('shipments')shipments(@CurrentUser()u:AuthUser,@Query()q:FulfillmentListQueryDto){return this.service.shipments(u,q)}
+@RequirePermissions('fulfillment.shipment.read')@Get('shipments/:id')shipment(@CurrentUser()u:AuthUser,@Param('id')id:string){return this.service.shipment(u,id)}
+@RequirePermissions('fulfillment.shipment.create')@Post('shipments')createShipment(@CurrentUser()u:AuthUser,@Body()i:CreateShipmentDto){return this.service.createShipment(u,i)}
+@RequirePermissions('fulfillment.shipment.create')@Post('shipments/:id/ready')ready(@CurrentUser()u:AuthUser,@Param('id')id:string){return this.service.readyShipment(u,id)}
+@RequirePermissions('fulfillment.shipment.dispatch')@Post('shipments/:id/dispatch')dispatch(@CurrentUser()u:AuthUser,@Param('id')id:string){return this.service.dispatchShipment(u,id)}
+@RequirePermissions('fulfillment.shipment.deliver')@Post('shipments/:id/deliver')deliver(@CurrentUser()u:AuthUser,@Param('id')id:string,@Body()i:DeliverShipmentDto){return this.service.deliverShipment(u,id,i)}
+@RequirePermissions('fulfillment.installation.read')@Get('installations')installations(@CurrentUser()u:AuthUser,@Query()q:FulfillmentListQueryDto){return this.service.installations(u,q)}
+@RequirePermissions('fulfillment.installation.manage')@Post('installations')createInstallation(@CurrentUser()u:AuthUser,@Body()i:CreateInstallationDto){return this.service.createInstallation(u,i)}
+@RequirePermissions('fulfillment.installation.manage')@Patch('installations/:id/schedule')schedule(@CurrentUser()u:AuthUser,@Param('id')id:string,@Body()i:ScheduleInstallationDto){return this.service.scheduleInstallation(u,id,i)}
+@RequirePermissions('fulfillment.installation.report')@Post('installations/:id/start')start(@CurrentUser()u:AuthUser,@Param('id')id:string){return this.service.startInstallation(u,id)}
+@RequirePermissions('fulfillment.installation.report')@Post('installations/:id/complete')complete(@CurrentUser()u:AuthUser,@Param('id')id:string,@Body()i:CompleteInstallationDto){return this.service.completeInstallation(u,id,i)}
+@RequirePermissions('fulfillment.aftersales.read')@Get('after-sales')afterSales(@CurrentUser()u:AuthUser,@Query()q:FulfillmentListQueryDto){return this.service.afterSales(u,q)}
+@RequirePermissions('fulfillment.aftersales.create')@Post('after-sales')createAfterSales(@CurrentUser()u:AuthUser,@Body()i:CreateAfterSalesDto){return this.service.createAfterSales(u,i)}
+@RequirePermissions('fulfillment.aftersales.manage')@Patch('after-sales/:id')updateAfterSales(@CurrentUser()u:AuthUser,@Param('id')id:string,@Body()i:UpdateAfterSalesDto){return this.service.updateAfterSales(u,id,i)}
+@RequirePermissions('fulfillment.aftersales.manage')@Post('after-sales/:id/comments')comment(@CurrentUser()u:AuthUser,@Param('id')id:string,@Body()i:AddAfterSalesCommentDto){return this.service.addComment(u,id,i)}}

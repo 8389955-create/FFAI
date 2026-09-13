@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ffai",
+  "account_id": "13f5a2771bed12ce04161f4f51b27df7",
+  "main": "src/cloudflare.ts",
+  "compatibility_date": "2026-09-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./apps/web/out",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  "containers": [
+    {
+      "class_name": "FfaiApiContainer",
+      "image": "./Dockerfile.api",
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "FFAI_API",
+        "class_name": "FfaiApiContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["FfaiApiContainer"]
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

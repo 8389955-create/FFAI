@@ -1,0 +1,1 @@
+import { Module } from '@nestjs/common';import { OmsController } from './oms.controller';import { OmsService } from './oms.service';@Module({controllers:[OmsController],providers:[OmsService]})export class OmsModule{}
