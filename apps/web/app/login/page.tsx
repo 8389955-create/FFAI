@@ -24,9 +24,8 @@ export default function LoginPage() {
     <p className="eyebrow">WELCOME BACK</p><h2>登录工作台</h2><p className="muted">系统会根据您的角色自动加载权限与数据范围。</p>
     <label>企业代码<input name="organizationCode" defaultValue="FFAI_DEMO" autoComplete="organization" /></label>
     <label>用户名<input name="username" defaultValue="admin" autoComplete="username" /></label>
-    <label>密码<input name="password" type="password" defaultValue="Admin123!" autoComplete="current-password" /></label>
+    <label>密码<input name="password" type="password" autoComplete="current-password" /></label>
     {error && <div className="error">{error}</div>}<button className="primary" disabled={loading}>{loading ? '正在登录…' : '进入系统 →'}</button>
     <small>演示账号由种子数据创建；首次上线前必须修改密码。</small>
   </form></section></main>;
 }
-

@@ -1,5 +1,6 @@
 import { PrismaClient, DataScopeType, MenuType, OrgUnitType } from '@prisma/client';
 import { hash } from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 
 const prisma = new PrismaClient();
 
@@ -114,6 +115,15 @@ const permissionDefinitions = [
 ] as const;
 
 async function main() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error('DATABASE_URL is required for seeding.');
+  const databaseHost = new URL(databaseUrl).hostname.toLowerCase();
+  const isLocalDatabase = ['localhost', '127.0.0.1', 'postgres', 'host.docker.internal'].includes(databaseHost);
+  const adminPassword = process.env.FFAI_SEED_ADMIN_PASSWORD ?? (isLocalDatabase ? 'Admin123!' : undefined);
+  if (!adminPassword) throw new Error('Remote database seeding requires FFAI_SEED_ADMIN_PASSWORD.');
+  const demoPassword = (localPassword: string) => isLocalDatabase ? localPassword : randomBytes(24).toString('base64url');
+  const demoStatus = isLocalDatabase ? 'ACTIVE' as const : 'DISABLED' as const;
+
   const organization = await prisma.organization.upsert({
     where: { code: 'FFAI_DEMO' },
     update: {},
@@ -410,11 +420,11 @@ async function main() {
   await prisma.rolePermission.createMany({ data: integrationPermissions.filter((permission) => permission.code === 'integration.read').map((permission) => ({ roleId: factoryDirector.id, permissionId: permission.id })), skipDuplicates: true });
   await prisma.roleMenu.createMany({ data: [{ roleId: factoryDirector.id, menuId: integrationMenu.id }], skipDuplicates: true });
 
-  const passwordHash = await hash('Admin123!', 12);
+  const passwordHash = await hash(adminPassword, 12);
   const admin = await prisma.user.upsert({
     where: { organizationId_username: { organizationId: organization.id, username: 'admin' } },
-    update: { passwordHash, mustChangePassword: false, passwordChangedAt: new Date() },
-    create: { organizationId: organization.id, username: 'admin', displayName: '系统管理员', passwordHash, mustChangePassword: false, passwordChangedAt: new Date() },
+    update: {},
+    create: { organizationId: organization.id, username: 'admin', displayName: '系统管理员', passwordHash, mustChangePassword: !isLocalDatabase, passwordChangedAt: new Date() },
   });
   await prisma.userRole.createMany({ data: [{ userId: admin.id, roleId: adminRole.id }, { userId: admin.id, roleId: ownerRole.id }], skipDuplicates: true });
   await prisma.userOrgUnit.upsert({ where: { userId_orgUnitId: { userId: admin.id, orgUnitId: company.id } }, update: { isPrimary: true }, create: { userId: admin.id, orgUnitId: company.id, isPrimary: true } });
@@ -422,40 +432,40 @@ async function main() {
     await prisma.integrationChannel.upsert({ where: { organizationId_type: { organizationId: organization.id, type } }, update: { name }, create: { organizationId: organization.id, type, name, status: 'INACTIVE', config: { reserved: true }, createdById: admin.id } });
   }
 
-  const salesPasswordHash = await hash('Sales123!', 12);
+  const salesPasswordHash = await hash(demoPassword('Sales123!'), 12);
   const salesUser = await prisma.user.upsert({
     where: { organizationId_username: { organizationId: organization.id, username: 'sales01' } },
-    update: { passwordHash: salesPasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
-    create: { organizationId: organization.id, username: 'sales01', displayName: '演示销售', phone: '13800009999', passwordHash: salesPasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
+    update: {},
+    create: { organizationId: organization.id, username: 'sales01', displayName: '演示销售', phone: '13800009999', passwordHash: salesPasswordHash, status: demoStatus, mustChangePassword: !isLocalDatabase, passwordChangedAt: new Date() },
   });
   await prisma.userRole.createMany({ data: [{ userId: salesUser.id, roleId: roles.get('SALES')!.id }], skipDuplicates: true });
-  const workerPasswordHash = await hash('Worker123!', 12);
+  const workerPasswordHash = await hash(demoPassword('Worker123!'), 12);
   const workerUser = await prisma.user.upsert({
-    where: { organizationId_username: { organizationId: organization.id, username: 'worker01' } }, update: { passwordHash: workerPasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
-    create: { organizationId: organization.id, username: 'worker01', displayName: '演示木工师傅', phone: '13800007701', passwordHash: workerPasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
+    where: { organizationId_username: { organizationId: organization.id, username: 'worker01' } }, update: {},
+    create: { organizationId: organization.id, username: 'worker01', displayName: '演示木工师傅', phone: '13800007701', passwordHash: workerPasswordHash, status: demoStatus, mustChangePassword: !isLocalDatabase, passwordChangedAt: new Date() },
   });
   await prisma.userRole.createMany({ data: [{ userId: workerUser.id, roleId: roles.get('WORKER')!.id }], skipDuplicates: true });
   const factoryUnit = await prisma.orgUnit.findUniqueOrThrow({ where: { organizationId_code: { organizationId: organization.id, code: 'FACTORY' } } });
   await prisma.userOrgUnit.upsert({ where: { userId_orgUnitId: { userId: workerUser.id, orgUnitId: factoryUnit.id } }, update: { isPrimary: true }, create: { userId: workerUser.id, orgUnitId: factoryUnit.id, isPrimary: true } });
-  const warehousePasswordHash = await hash('Warehouse123!', 12);
+  const warehousePasswordHash = await hash(demoPassword('Warehouse123!'), 12);
   const warehouseUser = await prisma.user.upsert({
-    where: { organizationId_username: { organizationId: organization.id, username: 'warehouse01' } }, update: { passwordHash: warehousePasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
-    create: { organizationId: organization.id, username: 'warehouse01', displayName: '演示仓管员', phone: '13800007702', passwordHash: warehousePasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
+    where: { organizationId_username: { organizationId: organization.id, username: 'warehouse01' } }, update: {},
+    create: { organizationId: organization.id, username: 'warehouse01', displayName: '演示仓管员', phone: '13800007702', passwordHash: warehousePasswordHash, status: demoStatus, mustChangePassword: !isLocalDatabase, passwordChangedAt: new Date() },
   });
   await prisma.userRole.createMany({ data: [{ userId: warehouseUser.id, roleId: roles.get('WAREHOUSE')!.id }], skipDuplicates: true });
   await prisma.userOrgUnit.upsert({ where: { userId_orgUnitId: { userId: warehouseUser.id, orgUnitId: factoryUnit.id } }, update: { isPrimary: true }, create: { userId: warehouseUser.id, orgUnitId: factoryUnit.id, isPrimary: true } });
-  const financePasswordHash = await hash('Finance123!', 12);
+  const financePasswordHash = await hash(demoPassword('Finance123!'), 12);
   const financeUser = await prisma.user.upsert({
-    where: { organizationId_username: { organizationId: organization.id, username: 'finance01' } }, update: { passwordHash: financePasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
-    create: { organizationId: organization.id, username: 'finance01', displayName: '演示财务', phone: '13800007703', passwordHash: financePasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
+    where: { organizationId_username: { organizationId: organization.id, username: 'finance01' } }, update: {},
+    create: { organizationId: organization.id, username: 'finance01', displayName: '演示财务', phone: '13800007703', passwordHash: financePasswordHash, status: demoStatus, mustChangePassword: !isLocalDatabase, passwordChangedAt: new Date() },
   });
   await prisma.userRole.createMany({ data: [{ userId: financeUser.id, roleId: roles.get('FINANCE')!.id }], skipDuplicates: true });
   const financeUnit = await prisma.orgUnit.findUniqueOrThrow({ where: { organizationId_code: { organizationId: organization.id, code: 'FINANCE' } } });
   await prisma.userOrgUnit.upsert({ where: { userId_orgUnitId: { userId: financeUser.id, orgUnitId: financeUnit.id } }, update: { isPrimary: true }, create: { userId: financeUser.id, orgUnitId: financeUnit.id, isPrimary: true } });
-  const installerPasswordHash = await hash('Installer123!', 12);
+  const installerPasswordHash = await hash(demoPassword('Installer123!'), 12);
   const installerUser = await prisma.user.upsert({
-    where: { organizationId_username: { organizationId: organization.id, username: 'installer01' } }, update: { passwordHash: installerPasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
-    create: { organizationId: organization.id, username: 'installer01', displayName: '演示物流安装师傅', phone: '13800007704', passwordHash: installerPasswordHash, mustChangePassword: false, passwordChangedAt: new Date() },
+    where: { organizationId_username: { organizationId: organization.id, username: 'installer01' } }, update: {},
+    create: { organizationId: organization.id, username: 'installer01', displayName: '演示物流安装师傅', phone: '13800007704', passwordHash: installerPasswordHash, status: demoStatus, mustChangePassword: !isLocalDatabase, passwordChangedAt: new Date() },
   });
   await prisma.userRole.createMany({ data: [{ userId: installerUser.id, roleId: roles.get('INSTALLER')!.id }], skipDuplicates: true });
   await prisma.userOrgUnit.upsert({ where: { userId_orgUnitId: { userId: installerUser.id, orgUnitId: factoryUnit.id } }, update: { isPrimary: true }, create: { userId: installerUser.id, orgUnitId: factoryUnit.id, isPrimary: true } });
@@ -674,7 +684,7 @@ async function main() {
     create: { organizationId: organization.id, payrollNo: 'PY-DEMO-001', employeeId: workerUser.id, period: '2026-09', baseAmount: 8000, bonusAmount: 800, deductionAmount: 300, netAmount: 8500, status: 'CONFIRMED', notes: '演示九月工资单', createdById: financeUser.id },
   });
 
-  console.log('Seed complete. Demo login: admin / Admin123!');
+  console.log(isLocalDatabase ? 'Seed complete. Local demo login: admin / Admin123!' : 'Production seed complete. Demo accounts are disabled.');
 }
 
 main().finally(() => prisma.$disconnect());

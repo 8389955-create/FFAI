@@ -81,7 +81,7 @@ packages/
 
    - 企业代码：`FFAI_DEMO`
    - 用户名：`admin`
-   - 密码：`Admin123!`
+   - 本地开发密码：`Admin123!`（仅适用于本机种子数据，生产环境不会使用该密码）
 
    限权验收账号：`sales01 / Sales123!`。该账号使用 `SELF` 数据范围，用于验证 CRM 数据隔离，以及只能访问本人负责或参与的项目。工人工作台账号：`worker01 / Worker123!`，默认只能查看分配给自己的生产工单并报工。仓管账号：`warehouse01 / Warehouse123!`，用于库存入库、调拨、出库与盘点验收。财务账号：`finance01 / Finance123!`，用于收付款、费用与工资核算验收。物流安装账号：`installer01 / Installer123!`，只能查看和处理分配给自己的配送、安装与售后任务。
 
@@ -110,7 +110,7 @@ Invoke-RestMethod http://localhost:4000/api/v1/projects -Headers $headers
 
 ## Cloudflare 部署
 
-系统已经配置为名为 `ffai` 的 Cloudflare Worker：Next.js 管理后台由 Workers Static Assets 提供，`/api/*` 由同一个 Worker 转发到运行 NestJS 的 Cloudflare Container。前后端使用同一域名，线上前端固定请求 `/api/v1`，无需暴露跨域 API 地址。
+系统项目名称为 `FFAI`；受 Cloudflare 资源标识只能使用小写字母和短横线的限制，Worker 技术标识为 `ffai`。Next.js 管理后台由 Workers Static Assets 提供，`/api/*` 由同一个 Worker 转发到运行 NestJS 的 Cloudflare Container。前后端使用同一域名，线上前端固定请求 `/api/v1`，无需暴露跨域 API 地址。
 
 先验证静态导出和 Cloudflare 配置：
 
